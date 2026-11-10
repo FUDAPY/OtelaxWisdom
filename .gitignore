@@ -1,0 +1,32 @@
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Entorno y Secretos
+.env
+.env*.local
+*.pem
+*.key
+
+# Persistencia de Contenedores y Datos Locales
+volumes/
+postgres_data/
+neo4j_data/
+neo4j_logs/
+neo4j_import/
+neo4j_plugins/
+
+# Builds y Cobertura
+dist/
+build/
+coverage/
+
+# Logs del Sistema
+logs/
+*.log
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db

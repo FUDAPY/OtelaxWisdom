@@ -1,0 +1,32 @@
+{
+  "name": "otelax-wisdom-core",
+  "version": "1.0.0",
+  "description": "Ecosistema forense RAG y Red de Conocimiento Jurídico en Grafos para normativa paraguaya",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "db:init": "node -e 'require(\"./src/db/initSchema.js\").initializeSchemas()'"
+  },
+  "keywords": [
+    "rag",
+    "pgvector",
+    "neo4j",
+    "legaltech",
+    "paraguay",
+    "law"
+  ],
+  "author": "Otelax Dev",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "neo4j-driver": "^5.20.0",
+    "pg": "^8.11.5",
+    "puppeteer-core": "^22.10.0"
+  }
+}

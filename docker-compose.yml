@@ -1,0 +1,98 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: otelax-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-otelax_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-otelax_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-otelax_wisdom}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-otelax_admin} -d ${POSTGRES_DB:-otelax_wisdom}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - otelax-net
+
+  neo4j:
+    image: neo4j:5.20-community
+    container_name: otelax-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/cambiar_este_password_seguro}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
+      NEO4J_dbms_memory_pagecache_size: "512M"
+      NEO4J_dbms_memory_heap_initial__size: "512M"
+      NEO4J_dbms_memory_heap_max__size: "1G"
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - otelax-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: otelax-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      API_PREFIX: ${API_PREFIX:-/api/v1}
+      POSTGRES_USER: ${POSTGRES_USER:-otelax_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-otelax_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-otelax_wisdom}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: ${NEO4J_USER:-neo4j}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-cambiar_este_password_seguro}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      LLM_MODEL: ${LLM_MODEL:-llama3:8b}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    networks:
+      - otelax-net
+
+networks:
+  otelax-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_import:
+    driver: local
+  neo4j_plugins:
+    driver: local
